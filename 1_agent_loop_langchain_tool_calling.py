@@ -15,25 +15,29 @@ TEMPERATURE = 0
 
 # ------ Data of our products ----------
 
-prices = {"laptop":1299.99, "headphone": 149.95, "keyboard":89.50}
-discount_percentages = {"bronze":5, "silver":12, "gold":23}
+prices = {"laptop": 1299.99, "headphone": 149.95, "keyboard": 89.50}
+discount_percentages = {"bronze": 5, "silver": 12, "gold": 23}
 
 
 # ------ Tools (Langchain @tool decorator) -------
 
-@tool
-def get_product_price(product:str) -> float:
-    """Look up the price of a product in the catalog"""
-    print(f"   >> Executing get_product_price(product = '{product}')")
-    return prices.get(product, 0) # if no product found, returns 0 ( default )
 
 @tool
-def apply_discount(price:float, discount_tier:str) -> float:
+def get_product_price(product: str) -> float:
+    """Look up the price of a product in the catalog"""
+    print(f"   >> Executing get_product_price(product = '{product}')")
+    return prices.get(product, 0)  # if no product found, returns 0 ( default )
+
+
+@tool
+def apply_discount(price: float, discount_tier: str) -> float:
     """Apply discount tier to a price and return the final price.
     Available tiers: bronze, silver, gold."""
-    print(f"   >> Executing apply_discount(price={price}, discount_tier={discount_tier})")
+    print(
+        f"   >> Executing apply_discount(price={price}, discount_tier={discount_tier})"
+    )
     discount = discount_percentages.get(discount_tier, 0)
-    return round(price * (1 - discount/100), 2)
+    return round(price * (1 - discount / 100), 2)
 
 
 ALL_TOOLS = [get_product_price, apply_discount]
@@ -46,15 +50,16 @@ llm = init_chat_model(f"groq:{MODEL}", temperature=TEMPERATURE)
 # we only need to change groq to openai or anything for switching models
 llm_with_tools = llm.bind_tools(ALL_TOOLS)
 
+
 @traceable(name="LangChain Agent Loop")
 def run_agent(question: str):
 
     print(f"Question : {question}")
-    print("="*60)
+    print("=" * 60)
 
     messages = [
         SystemMessage(
-            content= (
+            content=(
                 "You are a helpful shopping assistant. "
                 "You have access to a product catalog tool "
                 "and a discount tool.\n\n"
@@ -70,12 +75,12 @@ def run_agent(question: str):
                 "ask them which tier to use - do NOT assume one."
             )
         ),
-        HumanMessage(content=question)
+        HumanMessage(content=question),
     ]
 
     # --------- iteration starts here ----------------
 
-    for iteration in range(1, MAX_ITERATION+1):
+    for iteration in range(1, MAX_ITERATION + 1):
         print(f"\n----- Iteration {iteration} ------\n")
         ai_message = llm_with_tools.invoke(messages)
 
@@ -90,7 +95,7 @@ def run_agent(question: str):
 
         tool_call = tool_calls[0]
         tool_name = tool_call.get("name")
-        tool_args = tool_call.get("args",{})
+        tool_args = tool_call.get("args", {})
         tool_call_id = tool_call.get("id")
 
         print(f"   [Tool Selected] {tool_name} with args: {tool_args}")
@@ -103,14 +108,10 @@ def run_agent(question: str):
         print(f"   [Tool Result] {observation}")
 
         messages.append(
-            ToolMessage(
-                content=str(observation),
-                tool_call_id=tool_call_id
-            )
+            ToolMessage(content=str(observation), tool_call_id=tool_call_id)
         )
     print("ERROR : Max iterations reached without a final answer")
     return None
-
 
 
 if __name__ == "__main__":
