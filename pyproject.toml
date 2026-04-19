@@ -9,5 +9,6 @@ dependencies = [
     "isort>=8.0.1",
     "langchain>=1.2.15",
     "langchain-groq>=1.1.2",
+    "langchain-ollama>=1.1.0",
     "python-dotenv>=1.2.2",
 ]
