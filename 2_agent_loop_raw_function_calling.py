@@ -181,11 +181,7 @@ def run_agent(question: str):
         print(f"   [Tool Result] {observation}")
 
         messages.append(
-            {
-                "role":"tool",
-                "content":str(observation),
-                "tool_call_id":tool_id
-            }
+            {"role": "tool", "content": str(observation), "tool_call_id": tool_id}
         )
     print("ERROR : Max iterations reached without a final answer")
     return None
